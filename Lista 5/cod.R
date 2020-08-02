@@ -1,5 +1,3 @@
-# Lista 5 - MAE0514
-
 # local de trabalho 
 setwd("~/Área de Trabalho/Lista 5")
 
@@ -14,8 +12,10 @@ library(readr)
 # Exercício 1
 
 # Dados
-BMT_DataOBITO <- read_delim("BMT_DataOBITO.csv",";", escape_double = FALSE, trim_ws = TRUE)
-BMT_DataRELAPSED <- read_delim("BMT_DataRELAPSED.csv",";", escape_double = FALSE, trim_ws = TRUE)
+BMT_DataOBITO <- read_delim("BMT_DataOBITO.csv",";", 
+                            escape_double = FALSE, trim_ws = TRUE)
+BMT_DataRELAPSED <- read_delim("BMT_DataRELAPSED.csv",";", 
+                               escape_double = FALSE, trim_ws = TRUE)
 
 # item b
 
@@ -35,6 +35,7 @@ drop1(modelo2.cox, test="Chisq")
 # resíduos de Schoenfeld
 zph <- cox.zph(modelo2.cox)
 plot(zph)
+abline(h=modelo2.cox$coefficients,col='red')
 knitr::kable(zph$table,digits = 3)
 
 # item c
@@ -42,17 +43,18 @@ knitr::kable(zph$table,digits = 3)
 modelo3.cox <- coxph(Surv(Tinicio, Tfim, Delta1)~.-Id, data=BMT_DataOBITO)
 summary(modelo3.cox)
 
-knitr::kable(drop1(modelo3.cox, test="Chisq"),digits = 3)
+drop1(modelo3.cox, test="Chisq")
 
 # modelo final
 modelo4.cox <- coxph(Surv(Tinicio, Tfim, Delta1)~Z8, data=BMT_DataOBITO)
 summary(modelo4.cox)
 
-drop1(modelo4.cox, test="Chisq")
+knitr::kable(drop1(modelo3.cox, test="Chisq"),digits = 3)
 
 # resíduos de Schoenfeld
 zph2 <- cox.zph(modelo4.cox)
 plot(zph2)
+abline(h=modelo4.cox$coefficients,col='red')
 knitr::kable(zph2$table,digits = 3)
 
 # Exercício 2
@@ -80,6 +82,7 @@ summary(cox_fit1)
 zph_km <- cox.zph(cox_fit1,transform='km')
 
 plot(zph_km)
+abline(h=cox_fit1$coefficients,col='red')
 
 # tabela do testeS
 knitr::kable(zph_km$table,digits = 3)
@@ -95,6 +98,7 @@ summary(cox_strat_fit2)
 zph_km2 <- cox.zph(cox_strat_fit2,transform='km')
 
 plot(zph_km2)
+abline(h=cox_strat_fit2$coefficients,col='red')
 
 # tabela do teste
 knitr::kable(zph_km2$table,digits = 3)
@@ -222,4 +226,3 @@ ggplot(data = df3d) +
        y="Probabilidade do evento",
        title = "Estimativas de 1-Kaplan-Meier e incidência acumulada",
        color = "Curvas estimadas") 
-

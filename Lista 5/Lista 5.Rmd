@@ -74,9 +74,10 @@ Resísudos de Schoenfeld:
 zph <- cox.zph(modelo2.cox)
 
 plot(zph)
+abline(h=modelo2.cox$coefficients,col='red')
 ```
 
-Em que se pode notar que a variável tratamento apresenta um comportamento próximo de linear, não sendo possível traçar uma reta ao longo do tempo.
+Em que se pode notar que a variável tratamento não apresenta um comportamento próximo de linear, sendo muito difícil de traçar uma reta com o valor de $\hat\beta$ dentro das bandas de confiança.
 
 Fazendo a tabela com o resultado do teste, em que:
 $$ \left\{ \begin{array}{ll}
@@ -136,9 +137,10 @@ Resísudos de Schoenfeld:
 zph2 <- cox.zph(modelo4.cox)
 
 plot(zph2)
+abline(h=modelo4.cox$coefficients,col='red')
 ```
 
-Em que se pode notar que a variável tratamento apresenta um comportamento próximo de linear, não sendo possível traçar uma reta ao longo do tempo.
+Em que se pode notar que a variável tratamento apresenta um comportamento próximo de linear, sendo possível traçar uma reta ao longo do tempo com o valor de $\hat\beta$.
 
 Fazendo a tabela com o resultado do teste, em que:
 $$ \left\{ \begin{array}{ll}
@@ -200,9 +202,10 @@ Resísudos de Schoenfeld com a tranformação KM:
 zph_km <- cox.zph(cox_fit1,transform='km')
 
 plot(zph_km)
+abline(h=cox_fit1$coefficients,col='red')
 ```
 
-Em que se pode notar que a variável tratamento não apresenta um comportamento linear, não sendo possível traçar uma reta ao longo do tempo.
+Em que se pode notar que a variável tratamento não apresenta um comportamento linear, não sendo possível traçar uma reta ao longo do tempo com o valor de $\hat\beta$ dentro das bandas de confiança.
 
 Fazendo a tabela com o resultado do teste, em que:
 $$ \left\{ \begin{array}{ll}
@@ -231,9 +234,10 @@ Resísudos de Schoenfeld com a tranformação KM:
 zph_km2 <- cox.zph(cox_strat_fit2,transform='km')
 
 plot(zph_km2)
+abline(h=cox_strat_fit2$coefficients,col='red')
 ```
 
-Em que se pode notar que a variável tratamento apresenta um comportamento linear, sendo possível traçar uma reta ao longo do tempo.
+Em que se pode notar que a variável tratamento apresenta um comportamento linear, sendo possível traçar uma reta ao longo do tempo com o valor de $\hat\beta$ dentro das bandas de confiança.
 
 Fazendo a tabela com o resultado do teste, em que:
 $$ \left\{ \begin{array}{ll}
@@ -475,6 +479,7 @@ drop1(modelo2.cox, test="Chisq")
 # resíduos de Schoenfeld
 zph <- cox.zph(modelo2.cox)
 plot(zph)
+abline(h=modelo2.cox$coefficients,col='red')
 knitr::kable(zph$table,digits = 3)
 
 # item c
@@ -493,6 +498,7 @@ knitr::kable(drop1(modelo3.cox, test="Chisq"),digits = 3)
 # resíduos de Schoenfeld
 zph2 <- cox.zph(modelo4.cox)
 plot(zph2)
+abline(h=modelo4.cox$coefficients,col='red')
 knitr::kable(zph2$table,digits = 3)
 
 # Exercício 2
@@ -520,6 +526,7 @@ summary(cox_fit1)
 zph_km <- cox.zph(cox_fit1,transform='km')
 
 plot(zph_km)
+abline(h=cox_fit1$coefficients,col='red')
 
 # tabela do testeS
 knitr::kable(zph_km$table,digits = 3)
@@ -535,6 +542,7 @@ summary(cox_strat_fit2)
 zph_km2 <- cox.zph(cox_strat_fit2,transform='km')
 
 plot(zph_km2)
+abline(h=cox_strat_fit2$coefficients,col='red')
 
 # tabela do teste
 knitr::kable(zph_km2$table,digits = 3)
