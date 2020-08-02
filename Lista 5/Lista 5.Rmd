@@ -1,0 +1,666 @@
+---
+title: "Lista 5 - MAE0514"
+author: 'Guilherme NºUSP: 8943160 e Leonardo NºUSP: 9793436'
+output:
+  pdf_document:
+    fig_crop: no
+    keep_tex: yes
+    latex_engine: xelatex
+  html_document:
+    df_print: paged
+header-includes:
+- \usepackage{multirow}
+- \usepackage{ragged2e}
+---
+
+# Exercício 1
+
+Considere o conjunto de dados de pacientes com leucemia aguda que receberam transplante de medula óssea, apresentado na seção 1.3 de Klein e Moeschberger (2003). Os pacientes que recebem transplante de doador compatível (alogênico) podem desenvolver uma doença conhecida como DECH (doença do enxerto contra o hospedeiro) ou GVHD (graft-versus-host disease), que pode ser muito grave. No entanto, suspeita-se que DECH tenha um efeito anti-leucêmico nos pacientes. Para verificar essa hipótese, deseja-se ajustar um modelo de Cox aos dados, considerando-se como variável resposta o tempo até a recorrência da doença (relapse). Pacientes que apresentaram óbito antes da recorrência são considerados como observações censuradas. Os dados que devem ser utilizados estão disponíveis no arquivo BMT-Data.csv e a descrição das variáveis está no arquivo BMT-Data.des.
+
+(a) Defina duas variáveis dependentes do tempo indicadoras da ocorrência de DECH aguda e crônica. Escreva o modelo semiparamétrico de Cox incluindo as variáveis idade do paciente, sexo do paciente, tempo até o transplante, classificação morfológica Franco-AmericanaBritâneica (FAB) e tratamento profilático para DECH (MTX), além das variáveis dependentes do tempo definidas.
+
+## Resolução
+
+Inicialmente defindo as duas variáveis dependentes do tempo indicadoras da ocorrência de DECH aguda e crônica que no banco de dados são "A" e "C" respectivamente, sendo ambas covariáveis do tipo internas, ou seja, são medidas no indivíduo quando o paciente estava em observação, em relação o tempo até a recorrência da doença. 
+
+O modelo semi-paramétrico de cox pode ser escrito como:
+
+$$\alpha(t|x(t))=\alpha_0(t)e^{x'(t)\beta}$$
+
+Em que $\alpha(t|x(t))$ é a função de taxa de falha a ser modelada, a matriz $x(t)$ é conhecida para todo instante no qual a observação "i" está sendo acompanhada (ao longo do tempo), $\alpha_0(t)$ é a função de taxa de falha de referência e por fim $\beta$ é o vetor de parâmetros do modelo.
+
+(b) Ajuste um modelo de Cox com as variáveis do item (a). Selecione as variáveis significativas e faça a verificação da proporcionalidade dos riscos. O que pode ser concluído?
+
+## Resolução
+
+Fazendo o ajuste do banco de dados para o formato "longo" e ajustando o modelo com as covariáveis idade do paciente (Z1), sexo do paciente (Z3), tempo até o transplante (Z7), classificação morfológica Franco-Americana Britâneica (Z8) e tratamento profilático para DECH (Z10) e as covariáveis indicadoras da ocorrência de DECH aguda (A) e crônica (C) e com isso temos:
+
+```{r echo = FALSE,message=FALSE,warning=FALSE}
+setwd("~/Área de Trabalho/Lista 5")
+
+# Pacotes
+library(ggplot2)
+library(survival)
+library(survminer)
+library(KMsurv)
+library(readr)
+
+# Dados
+BMT_DataRELAPSED <- read_delim("BMT_DataRELAPSED.csv",";", 
+                               escape_double = FALSE, trim_ws = TRUE)
+
+# modelo inicial
+modelo1.cox <- coxph(Surv(Tinicio, Tfim, Delta2)~A+C+Z1+Z3+Z7+Z8+Z10,
+                     data=BMT_DataRELAPSED)
+summary(modelo1.cox)
+```
+
+Agora fazendo a verificação das variáveis mais significativas, temos:
+
+```{r echo = FALSE,message=FALSE,warning=FALSE}
+knitr::kable(drop1(modelo1.cox, test="Chisq"),digits = 3)
+```
+
+Em que apenas a variável "Z8" que corresponde a classificação morfológica Franco-Americana Britâneica (FAB) é significante, assim ajustando o modelo novamente obtemos o seguinte resultado:
+```{r echo = FALSE,message=FALSE,warning=FALSE}
+# modelo final
+
+modelo2.cox <- coxph(Surv(Tinicio, Tfim, Delta2)~Z8, data=BMT_DataRELAPSED)
+summary(modelo2.cox)
+```
+
+Resísudos de Schoenfeld:
+```{r echo = FALSE, out.width="80%",fig.align='center',fig.asp = 0.8}
+zph <- cox.zph(modelo2.cox)
+
+plot(zph)
+```
+
+Em que se pode notar que a variável tratamento apresenta um comportamento próximo de linear, não sendo possível traçar uma reta ao longo do tempo.
+
+Fazendo a tabela com o resultado do teste, em que:
+$$ \left\{ \begin{array}{ll}
+H_0: O \ modelo \ e \ de \ riscos \ proporcionais \\
+H_1: O \ modelo \ nao \ e \ de \ riscos \ proporcionais  \end{array} \right.\ $$
+
+```{r echo=FALSE}
+knitr::kable(zph$table,digits = 3)
+```
+
+Queremos testar se o modelo de riscos proporcionais se adequa a esse caso, e ao observar a tabela acima assim como resultado do gráfico acima a variável tratamento não se rejeita a hipótese nula com um p-valor de 0.925 considerando um nível de significância de 5%, ou seja, ela se adequa no modelo de riscos proporcionais.
+
+E com isso podemos concluir que as funções de sobrevivência para indivíduos com a variável Z8 igual a 0 e igual a 1 são razoavelmente paralelas ao
+longo de todo tempo. Ainda é possível dizer que indivíduos que assumem o valor 1 para a variável Z8 possuem 2.682 vezes de ter recorrência da doença (relapse) em relação a indivíduos que assumem o valor 0 para a variável Z8.
+
+(c) Repita os itens (a) e (b) utilizando o tempo até o óbito como variável reposta.
+
+## Resolução
+
+a) Defindo as duas variáveis dependentes do tempo indicadoras da ocorrência de DECH aguda e crônica que no banco de dados são "A" e "C" respectivamente, sendo ambas covariáveis do tipo externa, ou seja, podem influenciar no risco de falha, mas não dependem do processo de falha, em relação ao tempo até o óbito
+
+O modelo semi-paramétrico de cox pode ser escrito como:
+
+$$\alpha(t|x(t))=\alpha_0(t)e^{x'(t)\beta}$$
+
+Em que $\alpha(t|x(t))$ é a função de taxa de falha a ser modelada, a matriz $x(t)$ é conhecida para todo instante no qual a observação "i" está sendo acompanhada (ao longo do tempo), $\alpha_0(t)$ é a função de taxa de falha de referência e por fim $\beta$ é o vetor de parâmetros do modelo.
+
+b) Fazendo o ajuste do banco de dados para o formato "longo" e ajustando o modelo com as covariáveis idade do paciente (Z1), sexo do paciente (Z3), tempo até o transplante (Z7), classificação morfológica Franco-Americana Britâneica (Z8) e tratamento profilático para DECH (Z10) e as covariáveis indicadoras da ocorrência de DECH aguda (A) e crônica (C) e com isso temos:
+
+```{r echo = FALSE,message=FALSE,warning=FALSE}
+
+# Dados
+BMT_DataOBITO <- read_delim("BMT_DataOBITO.csv",";",
+                            escape_double = FALSE, trim_ws = TRUE)
+
+# modelo inicial
+modelo3.cox <- coxph(Surv(Tinicio, Tfim, Delta1)~.-Id, data=BMT_DataOBITO)
+summary(modelo3.cox)
+```
+
+Agora fazendo a verificação das variáveis mais significativas, temos:
+
+```{r echo = FALSE,message=FALSE,warning=FALSE}
+knitr::kable(drop1(modelo3.cox, test="Chisq"),digits = 3)
+```
+
+Assim como no modelo do item b apenas a variável "Z8" que corresponde a classificação morfológica Franco-Americana Britâneica (FAB) é significante, assim ajustando o modelo novamente obtemos o seguinte resultado:
+```{r echo = FALSE,message=FALSE,warning=FALSE}
+# modelo final
+
+modelo4.cox <- coxph(Surv(Tinicio, Tfim, Delta1)~Z8, data=BMT_DataOBITO)
+summary(modelo4.cox)
+```
+
+Resísudos de Schoenfeld:
+```{r echo = FALSE, out.width="80%",fig.align='center',fig.asp = 0.8}
+zph2 <- cox.zph(modelo4.cox)
+
+plot(zph2)
+```
+
+Em que se pode notar que a variável tratamento apresenta um comportamento próximo de linear, não sendo possível traçar uma reta ao longo do tempo.
+
+Fazendo a tabela com o resultado do teste, em que:
+$$ \left\{ \begin{array}{ll}
+H_0: O \ modelo \ e \ de \ riscos \ proporcionais \\
+H_1: O \ modelo \ nao \ e \ de \ riscos \ proporcionais  \end{array} \right.\ $$
+
+```{r echo=FALSE}
+knitr::kable(zph2$table,digits = 3)
+```
+
+Queremos testar se o modelo de riscos proporcionais se adequa a esse caso, e ao observar a tabela acima assim como resultado do gráfico acima a variável tratamento não se rejeita a hipótese nula com um p-valor de 0.207 considerando um nível de significância de 5%, ou seja, ela se adequa no modelo de riscos proporcionais.
+
+E com isso podemos concluir que as funções de sobrevivência para indivíduos com a variável Z8 igual a 0 e igual a 1 são razoavelmente paralelas ao
+longo de todo tempo. Ainda é possível dizer que indivíduos que assumem o valor 1 para a variável Z8 possuem 1.649 vezes de ir a óbito em relação a indivíduos que assumem o valor 0 para a variável Z8.
+
+\newpage
+
+# Exercício 2
+
+Um estudo foi conduzido para estudar se uma determinada droga era cancerígena ou não. Para isso, foram selecionadas 50 ninhadas de ratos e, de cada ninhada, foram selecionados 3 ratos. Dos ratos de cada ninhada, selecionou-se aleatoriamente um deles para receber a droga e os demais receberam placebo. Observou-se o tempo, em semanas, até o desenvolvimento de um tumor. Os dados estão apresentados no arquivo litter-data.csv.
+
+(a) Obtenha as curvas de Kaplan-Meier para os dois grupos e comente.
+
+## Resolução
+
+```{r echo = FALSE, out.width="80%",fig.align='center',message=FALSE,warning=FALSE,fig.asp = 1}
+litter_Data <- read.csv("litter-data.csv")
+
+
+KM <- survfit(Surv(Tempo,Delta)~ Tratamento,data = litter_Data)
+
+# Grafico Kaplan-Meier
+
+ggsurvplot(KM, data =litter_Data, linetype = 1,  risk.table = TRUE,
+           xlab="Tempo (em semanas)",
+           ylab=expression(hat(S(t))), risk.table.title="Em risco",
+           legend.title ="Tratamento",ggtheme=theme_gray(),
+           legend.labs=c("Placebo", "Droga"), pval=TRUE)
+
+```
+
+Em que podemos notar que as curvas são muito próximas com alguns cruzamentos até o dia 88, depois disso há um distanciamento entre as curvas a partir de então para os ratos que receberam a droga a curva decresce mais rapidamente. Entretanto, nota-se muitas censuras para os ratos que receberam placebo.
+
+(b) Ajuste um modelo de riscos proporcionais de Cox, ignorando o fato de existirem ratos pertencentes a uma mesma ninhada. Obtenha as estimativas dos parâmetros e interprete os resultados. Obtenha os resíduos de Schoenfeld para testar a proporcionalidade dos riscos. Faça um teste estatístico para a prpoporcionalidade dos riscos, utilizando a tranformação KM, ou seja, a curva de sobrevivência de Kaplan-Meier (versão contínua à esquerda).
+
+## Resolução
+
+Ajustando o modelo de riscos proporcionais de Cox, ignorando o fato de existirem ratos pertencentes a uma mesma ninhadam, temos:
+
+```{r echo = FALSE, out.width="80%",fig.align='center',message=FALSE,warning=FALSE,fig.asp = 1}
+cox_fit1 <- coxph(Surv(Tempo, Delta)~ Tratamento,data=litter_Data)
+summary(cox_fit1)
+```
+
+Como temos um único parâmetro $\beta$ a partir do modelo ajustado, pode-se dizer que a taxa de ocorrência de tumores em ratos que recebem a droga é 2.4 vezes a taxa associada a ratos que recebem placebo.
+
+Resísudos de Schoenfeld com a tranformação KM:
+```{r echo = FALSE, out.width="80%",fig.align='center',fig.asp = 0.8}
+zph_km <- cox.zph(cox_fit1,transform='km')
+
+plot(zph_km)
+```
+
+Em que se pode notar que a variável tratamento não apresenta um comportamento linear, não sendo possível traçar uma reta ao longo do tempo.
+
+Fazendo a tabela com o resultado do teste, em que:
+$$ \left\{ \begin{array}{ll}
+H_0: O \ modelo \ e \ de \ riscos \ proporcionais \\
+H_1: O \ modelo \ nao \ e \ de \ riscos \ proporcionais  \end{array} \right.\ $$
+
+```{r echo=FALSE}
+knitr::kable(zph_km$table,digits = 3)
+```
+
+Queremos testar se o modelo de riscos proporcionais se adequa a esse caso, e ao observar a tabela acima assim como resultado do gráfico acima a variável tratamento rejeita a hipótese nula com um p-valor de 0.025 considerando um nível de significância de 5%, ou seja, ela não se adequa no modelo de riscos proporcionais.
+
+(c) Ajuste um modelo estratificado por ninhada, obtenha as estimativas e interprete os parâmetros. Obtenha os resíduos de Schoenfeld e faça o mesmo teste do item anterior para testar a proporcionalidade dos riscos. Compare os resultados.
+
+## Resolução
+
+Ajustando um modelo estratificado por ninhada, temos:
+```{r echo = FALSE, out.width="80%",fig.align='center',message=FALSE,warning=FALSE,fig.asp = 1}
+cox_strat_fit2 <-coxph(Surv(Tempo, Delta)~ Tratamento+strata(Ninhada),data = litter_Data)
+summary(cox_strat_fit2)
+```
+Como temos um único parâmetro $\beta$ a partir do modelo ajustado, pode-se dizer que a taxa de ocorrência de tumores em ratos que recebem a droga é 2.5 vezes a taxa associada a ratos que recebem placebo.
+
+Resísudos de Schoenfeld com a tranformação KM:
+```{r echo = FALSE, out.width="80%",fig.align='center'}
+zph_km2 <- cox.zph(cox_strat_fit2,transform='km')
+
+plot(zph_km2)
+```
+
+Em que se pode notar que a variável tratamento apresenta um comportamento linear, sendo possível traçar uma reta ao longo do tempo.
+
+Fazendo a tabela com o resultado do teste, em que:
+$$ \left\{ \begin{array}{ll}
+H_0: O \ modelo \ e \ de \ riscos \ proporcionais \\
+H_1: O \ modelo \ nao \ e \ de \ riscos \ proporcionais  \end{array} \right.\ $$
+
+```{r echo=FALSE}
+knitr::kable(zph_km2$table,digits = 3)
+```
+
+Queremos testar se o modelo de riscos proporcionais se adequa a esse caso, e ao observar a tabela acima assim como resultado do gráfico acima a variável tratamento não se rejeita a hipótese nula com um p-valor de 0.305 considerando um nível de significância de 5%, ou seja, ela se adequa no modelo de riscos proporcionais.
+
+Assim comparando com o item anterior, adicionando o efeito de ninhada, assim como esperado a suposição de riscos proporcionais é satisfeita.
+
+# Exercício 3
+
+Um estudo foi feito sobre o efeito da radiação na sobrevida de ratos. Um grupo de ratos recebeu uma dose de 300 rad de radiação quando tinham entre 5 e 6 semanas de vida e foram acompanhados até o óbito. Quando morriam, os ratos eram necropsiados e a causa da morte determinada. Em particular, os pesquisadores tinham interesse em estudar as mortes por um tipo específico de linfoma um tipo de sarcoma.
+
+Os tempos de vida, em dias, dos ratos e as causas das mortes estão apresentadas na tabela abaixo.
+
+\center
+\begin{tabular}{lc}
+\hline
+\textbf{Causa da morte} & \textbf{Idade ao morrer (dias)} \\ \hline
+Linfoma tímico & \begin{tabular}[c]{@{}c@{}}158, 192, 194, 195, 202, 215, 212, 215, 229, 230, 237,\\  240, 244, 247, 259, 300, 301, 337, 415, 444, 485, 496,\\ 529, 537, 624, 707, 800\end{tabular} \\
+Sarcoma de células reticulares & \begin{tabular}[c]{@{}c@{}}430, 590, 606, 638, 655, 679, 691, 693, 696,\\ 747, 752, 760, 778, 821, 986\end{tabular} \\
+Outras causas & \begin{tabular}[c]{@{}c@{}}136, 246, 255, 376, 421, 565, 616, 617, 652, 655, 658,\\ 660, 662, 675, 681, 734, 736, 737, 757, 769, 777, 801,\\ 807, 825, 855, 857, 864, 868, 870, 873, 882, 895, 910,\\ 934, 942, 1015, 1019\end{tabular} \\ \hline
+\end{tabular}
+\justify
+
+(a) Obtenha as curvas de incidência acumulada dos três riscos competitivos. Comente.
+
+## Resolução
+
+As curvas de incidência acumulada dos três riscos competitivos são:
+```{r echo = FALSE, out.width="80%",fig.align='center'}
+library(cmprsk)
+
+# Dados
+lin <- c(158, 192, 193, 194, 195, 202, 212, 215, 229, 230, 237,
+         240, 244, 247, 259, 300, 301, 337, 415, 444, 485, 496,
+         529, 537, 624, 707, 800)
+sar <-  c(430, 590, 606, 638, 655, 679, 691, 693, 696,
+          747, 752, 760, 778, 821, 986)
+out <- c(136, 246, 255, 376, 421, 565, 616, 617, 652, 655, 658,
+         660, 662, 675, 681, 734, 736, 737, 757, 769, 777, 801,
+         807, 825, 855, 857, 864, 868, 870, 873, 882, 895, 910,
+         934, 942, 1015, 1019)
+
+causa <- factor(c(rep('Linfoma',27),rep('Sarcoma',15),rep('Outras_Causas',37)))
+tempo <- c(lin,sar,out)
+data3 <- data.frame(tempo,causa)
+
+# item a
+
+# Estimativas de km globais
+KM3 <- survfit(Surv(tempo)~1,data = data3)
+
+# estimativas das curvas de incidência acumulada
+CIF <- cuminc(tempo,factor(causa), cencode = 0)
+
+# dados para 1-km e cuvras de incidência acumulada
+df3d <- data.frame(KM3$time,1-KM3$surv,
+                   t(timepoints(CIF, times = data3$tempo)$est))
+
+colnames(df3d) <- c("time","F","Linfoma","Outras_Causas","Sarcoma")
+
+# cores
+colors <- c("Linfoma" = "Blue",
+            "Sarcoma" = "Red",
+            "Outras Causas" = "Green")
+
+# curvas das estimativas das curvas de incidência acumulada
+ggplot(data = df3d) +  
+  geom_step(aes(x = time, y = Linfoma,color = "Linfoma")) +
+  geom_step(aes(x = time, y = Sarcoma,color = "Sarcoma")) +
+  geom_step(aes(x = time, y = Outras_Causas,color = "Outras Causas")) +
+  scale_x_continuous(breaks = c(200,300,400,600,800,1000)) +
+  scale_color_manual(values = colors) +
+  labs(x="Idade ao morrer (dias)",
+       y="Probabilidade do evento",
+       title = "Estimativas das curvas de incidência acumulada",
+       color = "Evento") 
+```
+
+No gráfico acima apresentam-se as curvas referentes as estimativas de probabilidade de falha por cada uma dos desfechos (competitivos entre si) ao longo do tempo. Assim podemos observar que há um maior risco do rato vir a sofrer primeiro uma morte por linfoma tímico, sendo seguido por outras causas e com menor risco sarcoma de células reticulares atá 800 dias. No final do estudo há uma inversão das curvas, logo há um maior risco do rato vir a sofrer primeiro uma morte por outras causas do que por linfoma tímico.
+
+(b) Obtenha os valores estimados das funções de incidência acumulada dos três riscos competitivos nos instantes t = 200, 300, 400, 600, 800 e 1000.
+
+## Resolução
+
+Os valores estimados das funções de incidência acumulada dos três riscos competitivos nos instantes t = 200, 300, 400, 600, 800 e 1000 são:
+
+```{r echo=F}
+knitr::kable(data.frame(time = c(200,300,400,600,800,1000),
+  t(timepoints(CIF, times = c(200,300,400,600,800,1000))$est)),
+  digits = 3,row.names = F,col.names = c("time","Linfoma","Outras Causas","Sarcoma"))
+```
+
+(c) Obtenha a curva de Kaplan Meier da sobrevivência global dos dados. Calcule o valor da função de sobrevivência nos instantes t = 200, 300, 400, 600, 800 e 1000. Observe que a soma dos valores das funções do incidência acumulada em cada instante é igual a 1 menos o valor da curva de Kaplan-Meier naquele ponto.
+
+## Resolução
+
+A curva de Kaplan Meier da sobrevivência global dos dados:
+
+```{r echo = FALSE, out.width="80%",fig.align='center',message=FALSE,warning=FALSE}
+# Grafico Kaplan-Meier global
+ggsurvplot(KM3, data = data3, linetype = 1, xlab="Idade ao morrer (dias)",legend='none',
+           title='Curva de Kaplan-Meier Global',
+           ggtheme=theme_gray())
+```
+
+E os valores da função de sobrevivência nos instantes t = 200, 300, 400, 600, 800 e 1000 são:
+
+```{r echo=FALSE}
+# tabela com as estimavivas de km para o t=200,300,400,600,800 e 1000
+table <- summary(KM3,time=c(200,300,400,600,800,1000))
+table <- data.frame(table$time,table$surv,1-table$surv)
+colnames(table) <- c("time", "km","1-km")
+knitr::kable(table,digits = 3)
+```
+
+Em que podemos observar que a soma dos valores das funções do incidência acumulada em cada instante é igual a 1 menos o valor da curva de Kaplan-Meier naquele ponto.
+
+(d) Obtenha as curvas de sobrevivência de Kaplan Meier marginal dos dados, para cada tipo de evento, considerando a ocorrência dos outros eventos como censuras à direita. Coloque em um mesmo gráfico as curvas de inciência acumulada e 1 menos a curva de Kaplan-Meier.
+
+Compare e comente as diferenças, enfatizando o que cada curva de fato estima.
+
+## Resolução
+
+As curvas de sobrevivência de Kaplan Meier marginal dos dados, para cada tipo de evento, considerando a ocorrência dos outros eventos como censuras à direita:
+
+```{r echo=FALSE,fig.asp = 0.7,fig.align='center', out.width="80%"}
+linf <- ifelse(causa=='Linfoma',1,0)
+sarc <- ifelse(causa=='Sarcoma',1,0)
+oc <- ifelse(causa=='Outras_Causas',1,0)
+
+# Km evento linfoma
+KM4 <- survfit(Surv(tempo,linf)~1,data = data3)
+
+# Grafico Kaplan-Meier linfoma
+plot1 <- ggsurvplot(KM4,legend='none',
+                    title='Kaplan-Meier Linfoma tímico',
+                    ggtheme=theme_gray()) +
+                    labs(y='Probabilidade do evento',
+                         x='Idade ao morrer (dias)')
+
+# Km evento sarcoma
+KM5 <- survfit(Surv(tempo,sarc)~1,data = data3)
+
+# Grafico Kaplan-Meier sarcoma
+plot2 <- ggsurvplot(KM5, legend='none',
+                    title='Kaplan-Meier Sarcoma de células reticulares',
+                    ggtheme=theme_gray()) +
+                    labs(y='Probabilidade do evento',
+                         x='Idade ao morrer (dias)')
+
+# Km evento outras causas
+KM6 <- survfit(Surv(tempo,oc)~1,data = data3)
+
+# Grafico Kaplan-Meier outras causas
+plot3 <- ggsurvplot(KM6,legend='none', 
+                    title='Kaplan-Meier Outras causas',
+                    ggtheme=theme_gray()) + 
+                    labs(y='Probabilidade do evento',
+                         x='Idade ao morrer (dias)')
+
+# PLot das 3 curvas
+arrange_ggsurvplots(list(plot1, plot2, plot3), 
+                    print = TRUE,ncol = 2, nrow = 2)
+```
+
+Em que se pode notar que a curva por linfoma tímico decai mais suavemente a partir de 200 dias, a curva por outras causas, por sua vez, decai mais rapidamente a partir de 600 dias e a curva por sarcoma de células reticulares decai de forma suave a partir de 600 dias de estudo.
+
+E as curvas de incidencia acumulada e de 1-km, temos:
+
+```{r echo=FALSE,fig.asp = 0.7,fig.align='center', out.width="80%"}
+# cores
+colors <- c("1-Kaplan-Meier" = "Black",
+            "Linfoma" = "Blue",
+            "Sarcoma" = "Red",
+            "Outras Causas" = "Green")
+
+# Gráficos das estimativas de 1-Kaplan-Meier e incidência acumulada
+ggplot(data = df3d) +  
+  geom_step(aes(x = time, y = F,color = "1-Kaplan-Meier")) +
+  geom_step(aes(x = time, y = Linfoma,color = "Linfoma")) +
+  geom_step(aes(x = time, y = Sarcoma,color = "Sarcoma")) +
+  geom_step(aes(x = time, y = Outras_Causas,color = "Outras Causas")) +
+  scale_x_continuous(breaks = c(200,300,400,600,800,1000)) +
+  scale_color_manual(values = colors) +
+  labs(x="Idade ao morrer (dias)",
+       y="Probabilidade do evento",
+       title = "Estimativas de 1-Kaplan-Meier e incidência acumulada",
+       color = "Curvas estimadas") 
+
+```
+
+Nota-se que a curva 1-Kaplan-Meier seria a soma das curvas azul, verde e vermelha, ou seja a probabilidade de qualquer um dos 3 eventos ocorrer.
+
+# Códigos
+
+```{r eval=FALSE}
+
+# local de trabalho 
+setwd("~/Área de Trabalho/Lista 5")
+
+# Pacotes
+library(ggplot2)
+library(survival)
+library(survminer)
+library(KMsurv)
+library(cmprsk)
+library(readr)
+
+# Exercício 1
+
+# Dados
+BMT_DataOBITO <- read_delim("BMT_DataOBITO.csv",";", 
+                            escape_double = FALSE, trim_ws = TRUE)
+BMT_DataRELAPSED <- read_delim("BMT_DataRELAPSED.csv",";", 
+                               escape_double = FALSE, trim_ws = TRUE)
+
+# item b
+
+# modelo inicial
+modelo1.cox <- coxph(Surv(Tinicio, Tfim, Delta2)~A+C+Z1+Z3+Z7+Z8+Z10,
+                     data=BMT_DataRELAPSED)
+summary(modelo1.cox)
+
+knitr::kable(drop1(modelo1.cox, test="Chisq"),digits = 3)
+
+# modelo final
+modelo2.cox <- coxph(Surv(Tinicio, Tfim, Delta2)~Z8, data=BMT_DataRELAPSED)
+summary(modelo2.cox)
+
+drop1(modelo2.cox, test="Chisq")
+
+# resíduos de Schoenfeld
+zph <- cox.zph(modelo2.cox)
+plot(zph)
+knitr::kable(zph$table,digits = 3)
+
+# item c
+# modelo inicial
+modelo3.cox <- coxph(Surv(Tinicio, Tfim, Delta1)~.-Id, data=BMT_DataOBITO)
+summary(modelo3.cox)
+
+drop1(modelo3.cox, test="Chisq")
+
+# modelo final
+modelo4.cox <- coxph(Surv(Tinicio, Tfim, Delta1)~Z8, data=BMT_DataOBITO)
+summary(modelo4.cox)
+
+knitr::kable(drop1(modelo3.cox, test="Chisq"),digits = 3)
+
+# resíduos de Schoenfeld
+zph2 <- cox.zph(modelo4.cox)
+plot(zph2)
+knitr::kable(zph2$table,digits = 3)
+
+# Exercício 2
+
+# dados
+litter_Data <- read.csv("litter-data.csv")
+
+# Kaplan Meier
+KM <- survfit(Surv(Tempo,Delta)~ Tratamento,data = litter_Data)
+
+# Grafico Kaplan-Meier
+ggsurvplot(KM, data =litter_Data, linetype = 1,  risk.table = TRUE,
+           xlab="Tempo (em semanas)",
+           ylab=expression(hat(S(t))), risk.table.title="Em risco",
+           legend.title ="Tratamento",ggtheme=theme_gray(),
+           legend.labs=c("Placebo", "Droga"), pval=TRUE)
+
+# item b
+
+# modelo de cox ignorando ninhada
+cox_fit1 <- coxph(Surv(Tempo, Delta)~ Tratamento,data=litter_Data)
+summary(cox_fit1)
+
+# Residuos de Schoenfeld
+zph_km <- cox.zph(cox_fit1,transform='km')
+
+plot(zph_km)
+
+# tabela do testeS
+knitr::kable(zph_km$table,digits = 3)
+
+# item c
+
+# modelo de cox estratificado por ninhada
+cox_strat_fit2 <-coxph(Surv(Tempo, Delta)~ Tratamento+strata(Ninhada),
+                       data = litter_Data)
+summary(cox_strat_fit2)
+
+# Residuos de Schoenfeld
+zph_km2 <- cox.zph(cox_strat_fit2,transform='km')
+
+plot(zph_km2)
+
+# tabela do teste
+knitr::kable(zph_km2$table,digits = 3)
+
+# Exercício 3
+
+# Dados
+lin <- c(158, 192, 193, 194, 195, 202, 212, 215, 229, 230, 237,
+         240, 244, 247, 259, 300, 301, 337, 415, 444, 485, 496,
+         529, 537, 624, 707, 800)
+sar <-  c(430, 590, 606, 638, 655, 679, 691, 693, 696,
+          747, 752, 760, 778, 821, 986)
+out <- c(136, 246, 255, 376, 421, 565, 616, 617, 652, 655, 658,
+         660, 662, 675, 681, 734, 736, 737, 757, 769, 777, 801,
+         807, 825, 855, 857, 864, 868, 870, 873, 882, 895, 910,
+         934, 942, 1015, 1019)
+
+causa <- factor(c(rep('Linfoma',27),rep('Sarcoma',15),rep('Outras_Causas',37)))
+tempo <- c(lin,sar,out)
+data3 <- data.frame(tempo,causa)
+
+# item a
+
+# estimativas das curvas de incidência acumulada
+CIF <- cuminc(tempo,factor(causa), cencode = 0)
+
+# Estimativas de km globais
+KM3 <- survfit(Surv(tempo)~1,data = data3)
+
+# dados para 1-km e cuvras de incidência acumulada
+df3d <- data.frame(KM3$time,1-KM3$surv,
+                   t(timepoints(CIF, times = data3$tempo)$est))
+
+colnames(df3d) <- c("time","F","Linfoma","Outras_Causas","Sarcoma")
+
+# cores
+colors <- c("Linfoma" = "Blue",
+            "Sarcoma" = "Red",
+            "Outras Causas" = "Green")
+
+# curvas das estimativas das curvas de incidência acumulada
+ggplot(data = df3d) +  
+  geom_step(aes(x = time, y = Linfoma,color = "Linfoma")) +
+  geom_step(aes(x = time, y = Sarcoma,color = "Sarcoma")) +
+  geom_step(aes(x = time, y = Outras_Causas,color = "Outras Causas")) +
+  scale_x_continuous(breaks = c(200,300,400,600,800,1000)) +
+  scale_color_manual(values = colors) +
+  labs(x="Idade ao morrer (dias)",
+       y="Probabilidade do evento",
+       title = "Estimativas das curvas de incidência acumulada",
+       color = "Evento") 
+
+# item b
+knitr::kable(data.frame(time = c(200,300,400,600,800,1000),
+  t(timepoints(CIF, times = c(200,300,400,600,800,1000))$est)),
+  digits = 3,row.names = F,col.names = c("time","Linfoma","Outras Causas","Sarcoma"))
+
+# item c
+
+# Grafico Kaplan-Meier global
+ggsurvplot(KM3, data = data3, linetype = 1, xlab="Idade ao morrer (dias)",legend='none',
+           title='Curva de Kaplan-Meier Global',
+           ggtheme=theme_gray())
+
+# tabela com as estimavivas de km para o t=200,300,400,600,800 e 1000
+table <- summary(KM3,time=c(200,300,400,600,800,1000))
+table <- data.frame(table$time,table$surv,1-table$surv)
+colnames(table) <- c("time", "km","1-km")
+knitr::kable(table,digits = 3)
+
+# item d
+linf <- ifelse(causa=='Linfoma',1,0)
+sarc <- ifelse(causa=='Sarcoma',1,0)
+oc <- ifelse(causa=='Outras_Causas',1,0)
+
+# Km evento linfoma
+KM4 <- survfit(Surv(tempo,linf)~1,data = data3)
+
+# Grafico Kaplan-Meier linfoma
+plot1 <- ggsurvplot(KM4,legend='none',
+                    title='Kaplan-Meier Linfoma tímico',
+                    ggtheme=theme_gray()) +
+                    labs(y='Probabilidade do evento',
+                         x='Idade ao morrer (dias)')
+
+# Km evento sarcoma
+KM5 <- survfit(Surv(tempo,sarc)~1,data = data3)
+
+# Grafico Kaplan-Meier sarcoma
+plot2 <- ggsurvplot(KM5, legend='none',
+                    title='Kaplan-Meier Sarcoma de células reticulares',
+                    ggtheme=theme_gray()) +
+                    labs(y='Probabilidade do evento',
+                         x='Idade ao morrer (dias)')
+
+# Km evento outras causas
+KM6 <- survfit(Surv(tempo,oc)~1,data = data3)
+
+# Grafico Kaplan-Meier outras causas
+plot3 <- ggsurvplot(KM6,legend='none', 
+                    title='Kaplan-Meier Outras causas',
+                    ggtheme=theme_gray()) + 
+                    labs(y='Probabilidade do evento',
+                         x='Idade ao morrer (dias)')
+
+# PLot das 3 curvas
+arrange_ggsurvplots(list(plot1, plot2, plot3), 
+                    print = TRUE,ncol = 2, nrow = 2)
+
+# cores
+colors <- c("1-Kaplan-Meier" = "Black",
+            "Linfoma" = "Blue",
+            "Sarcoma" = "Red",
+            "Outras Causas" = "Green")
+
+# Gráficos das estimativas de 1-Kaplan-Meier e incidência acumulada
+ggplot(data = df3d) +  
+  geom_step(aes(x = time, y = F,color = "1-Kaplan-Meier")) +
+  geom_step(aes(x = time, y = Linfoma,color = "Linfoma")) +
+  geom_step(aes(x = time, y = Sarcoma,color = "Sarcoma")) +
+  geom_step(aes(x = time, y = Outras_Causas,color = "Outras Causas")) +
+  scale_x_continuous(breaks = c(200,300,400,600,800,1000)) +
+  scale_color_manual(values = colors) +
+  labs(x="Idade ao morrer (dias)",
+       y="Probabilidade do evento",
+       title = "Estimativas de 1-Kaplan-Meier e incidência acumulada",
+       color = "Curvas estimadas") 
+```
+

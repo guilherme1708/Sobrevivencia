@@ -1,0 +1,8 @@
+Data on 50 litters of rats (3 rats per litter)
+Data can be read in free format. The variables represented in the dataset are as follows: 
+
+Time to tumor development 
+Indicator of tumor development (1=yes, 0=no) 
+Treatment (1=treated with drug, 0=given placebo) 
+Litter 
+Reference Mantel et al. Cancer Research 37 (1977): 3863-3868.

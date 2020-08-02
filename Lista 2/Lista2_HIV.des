@@ -1,0 +1,6 @@
+Os dados estão apresentados em quatro colunas:
+1- Paciente
+2- Idade de entrada no estudo (em meses)
+3- Idade com que morreu ou tempo de censura (meses)
+4- Indicador de falha (1, se óbito e 0, se vivo)
+

@@ -1,0 +1,117 @@
+---
+title: "Atividade 1"
+author: 'Guilherme Navarro NUSP: 8943160'
+date: "03 de agosto de 2020"
+output:
+  pdf_document:
+    fig_crop: no
+    keep_tex: yes
+    latex_engine: xelatex
+header-includes:
+- \usepackage{multirow}
+- \usepackage{ragged2e}
+- \usepackage{booktabs}
+---
+
+# Atividade 1
+
+Seja T uma variável aleatória que, condicionalmente a variável aleatória U , tem distribuição
+Weibull com parâmetros $\lambda = Ue^{x^T \beta}$ e $\gamma$, ou seja, tem função de risco (ou taxa de falha) dada por
+
+$$\alpha(t|U,x)=Ue^{x^T \beta}\gamma t^{\gamma-1},$$
+
+em que $x$ é um vetor de covariáveis conhecidas (que inclui o intercepto), $\beta$ e $\gamma$, são parâmetros (desconhecidos). Assuma que a variável aleatória U tenha distribuição estável positiva, com função densidade de probabilidade dada por
+
+$$f_U(u)=\frac{1}{\pi} \sum^{\infty}_{k=1}(-1)^{k+1} \frac{\Gamma(k\theta+1)}{k!}u^{-k\theta-1}sen(k\theta\pi), \ u \ge 0,$$
+
+em que $\theta$ é o parâmetro da distribuição com $0<\theta \le 1$. É interessante observar que o caso $\theta=1$ corresponde a uma variável aleatória degenerada no ponto U = 1. Essa distribuição tem a propriedade de apresentar todos os momentos infinitos e, consequentemente, o valor esperado é infinito e a variância não existe. Apesar da expressão da função densidade de probabilidade poder ser expressa apenas em termos de uma série, a transformada de Laplace tem uma forma bastante simples:
+
+$$\mathcal{L}(s)=\mathbb{E}[e^{-sU}]=e^{-s^\theta}.$$
+(a) Qual é a distribuição marginal de T (considerando-se dado o vetor de covariáveis x)?
+
+## Resolução 
+
+Como $T|U \sim Weibull(\lambda,\gamma)$ com $\lambda=Ue^{x^T\beta}$
+
+Assim temos que:
+$$f_{T|U}(t|u)=ue^{x^T\beta}\gamma t^{\gamma-1} e^{-ue^{x^T\beta}\gamma t^\gamma}$$
+e para encontrar a distribuição marginal de t, basta lembrar da teoria de probabilidades:
+$$f_T(t|x)=\int_U \frac{f_{T,U}(t,u)}{f_U(u)} du = \int_U f_{T|U}(t|u) f_U(u) du \ \ \ \ (I)$$
+Assim:
+$$f_{T|U}(t|u) f_U(u) = ue^{x^T\beta}\gamma t^{\gamma-1} e^{-ue^{x^T\beta}\gamma t^\gamma} \frac{1}{\pi} \sum^{\infty}_{k=1}(-1)^{k+1} \frac{\Gamma(k\theta+1)}{k!}u^{-k\theta-1}sen(k\theta\pi)$$
+$$=e^{x^T\beta}\gamma t^{\gamma-1} [ue^{-ue^{x^T\beta}\gamma t^\gamma} \frac{1}{\pi} \sum^{\infty}_{k=1}(-1)^{k+1} \frac{\Gamma(k\theta+1)}{k!}u^{-k\theta-1}sen(k\theta\pi)] \ \ (II)$$
+Voltando em (I), fazendo a integral com a expressão (II), temos:
+$$\int_U f_{T|U}(t|u) f_U(u) du=\int_U e^{x^T\beta}\gamma t^{\gamma-1} [ue^{-ue^{x^T\beta}\gamma t^\gamma} \frac{1}{\pi} \sum^{\infty}_{k=1}(-1)^{k+1} \frac{\Gamma(k\theta+1)}{k!}u^{-k\theta-1}sen(k\theta\pi)] du$$
+$$=e^{x^T\beta}\gamma t^{\gamma-1} \int_U ue^{-ue^{x^T\beta}\gamma t^\gamma} \frac{1}{\pi} \sum^{\infty}_{k=1}(-1)^{k+1} \frac{\Gamma(k\theta+1)}{k!}u^{-k\theta-1}sen(k\theta\pi) du$$
+
+E podemos escrever a expressão acima em termos de uma esperança:
+$$e^{x^T\beta}\gamma t^{\gamma-1} \mathbb{E}[Ue^{-Ux^T\beta t^\gamma}] \ \ \ (III)$$
+Utilizando a definição da tranformada de Laplace:
+$$\mathcal{L}(s)=\mathbb{E}[e^{-sU}]=\int^\infty_0  e^{-su} f_U(u) du$$
+Como a esperança é um operador linear, podemos fazer:
+$$\frac{d}{ds}\mathbb{E}(e^{-sU})=\mathbb{E}\Big(\frac{d}{ds}(e^{-sU}) \Big )=-\mathbb{E}[Ue^{-sU}]$$
+Utilizando esses resultados:
+$$\mathbb{E}[Ue^{-sU}]=-\frac{d}{ds}\mathbb{E}(e^{-sU})=-\frac{d}{ds} (e^{-s^\theta})=-\theta (-e^{-s^\theta})s^{\theta-1}=\theta e^{-s^\theta}s^{\theta-1}$$
+Substituindo $s=t^\gamma e^{x^T\beta}$ e voltando em $(III)$ utilizando o resultado acima, temos:
+$$f_T(t|x)=e^{x^T\beta}\gamma t^{\gamma-1} \theta e^{-(t^\gamma e^{x^T\beta})^\theta} (t^\gamma e^{x^T\beta})^{\theta-1}$$
+
+Assim a distribuição marginal de T, parece ser alguma modificação da distribuição Weibull com 3 parâmentros, com f.d.p dada pela expressão acima. 
+
+(b) Assuma agora que a variável aleatória T tenha distribuição condicional a U especificada pela seguinte função de risco:
+
+$$\alpha(t|U,x)=\alpha_0(t)Ue^{x^T \beta},$$
+
+em que $\alpha_0(t)$ é a função de risco basal. Obtenha a função de sobrevivência marginal de T (considerando-se conhecido o vetor x de covariáveis) e também a função de risco.
+
+## Resolução 
+
+Como visto em aula a função de sobrevivência marginal é dada por:
+$$S(t|x)=\mathbb{P}(T>t|x)=\int^\infty_t f_T(s)=\int^\infty_t \int^\infty_0 f_{T|U}(s|u) f_U(u) \ duds=\int^\infty_0 \Big ( \int^\infty_t f_{T|U}(s|u) ds \Big ) f_U(u) du $$
+Mas como temos o caso de riscos proporcionais, logo:
+$$S(t|x)=\mathbb{P}(T>t|x)=\int^\infty_0 e^{-A_0(t)ue^{x^T\beta}} f_U(u) du =\int^\infty_0 e^{-(A_0(t)e^{x^T\beta})u} f_U(u) du \ \ \ (I)$$
+Utilizando o resultado da transformada de laplace que é definida por:
+$$\mathcal{L}(s)=\mathbb{E}[e^{-sU}]=\int^\infty_0  e^{-su} f_U(u) du$$
+E como foi dado no exercício a transformada de laplace para este caso é:
+$$\mathcal{L}(s)=\mathbb{E}[e^{-sU}]=e^{-s^\theta}$$
+Assim voltando em $(I)$, temos:
+$$\int^\infty_0 e^{-(A_0(t)e^{x^T\beta})u} f_U(u) du = e^{-(A_0(t)e^{x^T\beta})^\theta}$$
+Logo:
+$$\Rightarrow S(t|x)=e^{-(A_0(t)e^{x^T\beta})^\theta}$$
+Em que $A_0$ é a função de risco basal acumulada e $\beta$ e $\theta$ são parâmentros desconhecidos.
+
+Para a função de risco marginal, irei utlizar o resultado dado em aula, em que:
+$$\alpha(t|x)=-(\alpha_0(t)e^{X^T\beta})\frac{\mathcal{L}'(A_0(t)e^{x^T\beta})}{\mathcal{L}(A_0(t)e^{x^T\beta})}$$
+Assim teremos que calcular a primeira devirada da transformada de laplace, porém isto ja foi feito no item anterior, substituindo os valores, logo:
+$$\alpha(t|x)=-(\alpha_0(t)e^{x^T\beta})\Big (\frac{-\theta e^{-(A_0(t)e^{x^T\beta})^\theta}(A_0(t)e^{x^T\beta})^{\theta-1}}{e^{-(A_0(t)e^{x^T\beta})^\theta}}\Big )=\alpha_0(t)e^{x^T\beta}\theta(A_0(t)e^{x^T\beta})^{\theta-1}$$
+logo:
+$$\alpha(t|x)=\alpha_0(t)e^{x^T\beta}\theta(A_0(t)e^{x^T\beta})^{\theta-1}$$
+
+(c) Com base nos itens (a) e (b), discuta o efeito de ignorarmos a existência da variável de fragilidade U no modelo nas estimativas dos parâmetros associados com as covariáveis.
+
+(d) Assuma agora que temos um par de variáveis aleatórias $(T_1,T_2)$ satisfazendo um modelo de fragilidade compartilhada, ou seja:
+
+- $T_1$ e $T_2$ são condicionalmente independentes dada a variável U ;
+
+- a distribuição de $T_j$ condicionalmente a U é dada por
+
+$$\alpha_j(t|U)=\alpha_0(t)U \lambda_j, \ j=1,2,$$
+em que $\lambda_1$ e $\lambda_2$ são parâmetros desconhecidos (que podem eventualmente depender de covariáveis);
+
+- U tem distribuição estável positiva, com transformada de Laplace dada por (1).
+Obtenha a função de sobrevivência conjunta de $(T_1,T_2)$ marginal (integrando-se com relação a U).
+
+## Resolução
+
+Assim como no item b a função sobrevivência conjunta marginal de $(T_1,T_2)$, s é dada por:
+$$S(t_1,t_2)=\mathbb{P}(T_1>t_1,T_2>t_2)=\int^\infty_0 S(t_1,t_2|u)f_U \ du$$
+Mas como temos o caso de riscos proporcionais, logo:
+$$S(t_1,t_2)=\mathbb{P}(T_1>t_1,T_2>t_2)=\int^\infty_0 e^{-A_0(t)u\lambda_j} f_U(u) du =\int^\infty_0 e^{-u(A_0(t)\lambda_j)} f_U(u) du \ \ \ j=1,2 \ \ \ \ (I)$$
+Utilizando o resultado da transformada de laplace que é definida por:
+$$\mathcal{L}(s)=\mathbb{E}[e^{-sU}]=\int^\infty_0  e^{-su} f_U(u) du$$
+E como foi dado no exercício a transformada de laplace para este caso é:
+$$\mathcal{L}(s)=\mathbb{E}[e^{-sU}]=e^{-s^\theta}$$
+Assim voltando em $(I)$, temos:
+$$\int^\infty_0 e^{-u(A_0(t)\lambda_j)} f_U(u) du = e^{-(A_0(t)\lambda_j)^\theta} \ \ j=1,2$$
+Logo:
+$$\Rightarrow S(t_1,t_2)=e^{-(A_0(t)\lambda_j)^\theta} \ \ j=1,2$$
+Em que $A_0$ é a função de risco basal acumulada e $\beta$ e $\lambda_j$ são parâmentros desconhecidos.
